@@ -1,11 +1,22 @@
-include pyrandall/schemas/scenario/v2.yaml
+include *.md
+include *.py
+include LICENSE
+include tox.ini
 include README.md
 include CHANGELOG
 include VERSION
+include pyrandall/schemas/scenario/v2.yaml
+recursive-include pyrandall *.yaml
 
 exclude Makefile
 exclude dev_requirements.txt
-exclude Dockerfile
+exclude Dockerfile*
 exclude docker-compose.yml
 exclude Jenkinsfile
 exclude logging.yaml
+exclude .pre-commit-config.yaml
+
+recursive-exclude examples *
+recursive-exclude files *
+recursive-exclude tests *
+

@@ -4,13 +4,10 @@ __version__ = open("VERSION").read().strip()
 
 
 setup(
-    name="pyrandall",
     version=__version__,  # see file: VERSION
     packages=find_packages(exclude=["tests", "examples"]),
     python_requires=">=3",
     include_package_data=True,
-    description="Pyrandall a testsuite framework oriented around data instead of code",
-    url="https://github.com/kpn/pyrandall",
     entry_points={"console_scripts": ["pyrandall = pyrandall.cli:main"]},
     install_requires=[
         "jsonschema",
