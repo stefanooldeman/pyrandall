@@ -48,6 +48,7 @@ class Flags(Flag):
 
 
 class Assertion:
+
     def __init__(self, field: str, spec: Dict, on_fail_text, resultset):
         self.field = field
         self.spec = spec
@@ -161,6 +162,28 @@ class SkipAssertionCall(AssertionCall):
 
     def __str__(self):
         return f"assertion skipped"
+
+
+class ResultSet:
+    def __init__(self, reporter):
+        self.assertions = []
+        self.reporter = reporter
+
+    def all(self, assertions=None):
+        return len(self.assertions) != 0 and all(self.assertions)
+
+    def assertion_failed(self, assertion_call, fail_text):
+        self.reporter.print_assertion_failed(assertion_call, fail_text)
+        self.assertions.append(False)
+
+    def assertion_passed(self, assertion_call: AssertionCall):
+        self.reporter.print_assertion_passed(assertion_call)
+        self.assertions.append(True)
+
+    def assertion_skipped(self, assertion_call: AssertionCall):
+        self.reporter.print_assertion_skipped(assertion_call)
+        # True right?
+        self.assertions.append(True)
 
 
 # implicit Data interface of records below:

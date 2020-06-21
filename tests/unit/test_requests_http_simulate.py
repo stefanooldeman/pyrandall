@@ -71,7 +71,7 @@ def simulator_3():
 
 def test_simulate__post_201_repsonse(simulator_1, reporter):
     with vcr.use_cassette("test_http_executor_simulate_post_201") as cassette:
-        result = simulator_1.execute(reporter)
+        result = simulator_1.run(reporter)
 
         assert len(cassette) == 1
         r0 = cassette.requests[0]
@@ -87,7 +87,7 @@ def test_simulate__post_201_repsonse(simulator_1, reporter):
 
 def test_simulate_post_400_response(simulator_2, reporter):
     with vcr.use_cassette("test_http_executor_simulate_post_400_response") as cassette:
-        result = simulator_2.execute(reporter)
+        result = simulator_2.run(reporter)
 
         assert len(cassette) == 1
         r0 = cassette.requests[0]
@@ -104,13 +104,13 @@ def test_simulate_post_400_response(simulator_2, reporter):
 def test_simulate_fails_zero_requests(reporter):
     spec = RequestEventsSpec(requests=[])
     executor = RequestHttpEvents(spec)
-    result = executor.execute(reporter)
+    result = executor.run(reporter)
     assert not result
 
 
 def test_simulate_post_200_and_400(simulator_3, reporter):
     with vcr.use_cassette("test_http_executor_simulate_post_201_and_400") as cassette:
-        result = simulator_3.execute(reporter)
+        result = simulator_3.run(reporter)
 
         assert len(cassette) == 2
         r0 = cassette.requests[0]

@@ -38,7 +38,7 @@ MESSAGE_JSON = b'{\n  "uri": "iphone://settings/updates",\n  "session": "111",\n
 #         unsafe=True, execution_mode=ExecutionMode.VALIDATING, assertions={}
 #     )
 #     executor = BrokerKafka(spec)
-#     result = executor.execute(reporter_1)
+#     result = executor.run(reporter_1)
 #     reporter_1.assertion_failed.assert_called_with(mock.ANY)
 
 
@@ -47,8 +47,8 @@ MESSAGE_JSON = b'{\n  "uri": "iphone://settings/updates",\n  "session": "111",\n
 def test_validate_fail_zero_messages(kafka_mock, reporter_1):
     # when the expected value is 1
     validator = new_executor({"total_events": 1})
-    # and it is executed
-    validator.execute(reporter_1)
+    # and it is called
+    validator.run(reporter_1)
     # then report that a assertion failed
     reporter_1.assertion_failed.assert_called_with(
         mock.ANY, "total amount of received events"
@@ -63,7 +63,7 @@ def test_validate_fail_one_messages_body(kafka_mock, reporter_1):
     validator = new_executor(
         {"total_events": 1, "unordered": [{"value": MESSAGE_JSON}]}
     )
-    validator.execute(reporter_1)
+    validator.run(reporter_1)
     reporter_1.assertion_passed.assert_called_with(mock.ANY)
     # then validate fails
     reporter_1.assertion_failed.assert_called_with(mock.ANY, "unordered events")
@@ -77,7 +77,7 @@ def test_validate_matches_all(kafka_mock, reporter_1):
     validator = new_executor(
         {"total_events": 1, "unordered": [MESSAGE_JSON]}
     )
-    validator.execute(reporter_1)
+    validator.run(reporter_1)
     reporter_1.assertion_failed.assert_not_called()
     # then validate passes on the message count and body compare
     assert (

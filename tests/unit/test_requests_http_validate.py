@@ -10,7 +10,7 @@ from tests.conftest import vcr
 
 
 @pytest.fixture
-def reporter():
+def resultset():
     return Reporter().create_and_track_resultset()
 
 
@@ -71,9 +71,9 @@ def validator_5():
     return RequestHttp(spec)
 
 
-def test_validate_makes_get(validator_1, reporter):
+def test_validate_makes_get(validator_1, resultset):
     with vcr.use_cassette("test_http_executor_validate_makes_get") as cassette:
-        result = validator_1.execute(reporter)
+        result = validator_1.run(resultset)
 
         assert len(cassette) == 1
         r0 = cassette.requests[0]
@@ -87,20 +87,20 @@ def test_validate_makes_get(validator_1, reporter):
         assert result
 
 
-def test_executor_fails_zero_assertions(reporter):
+def test_executor_fails_zero_assertions(resultset):
     spec = MagicMock(
         unsafe=True, execution_mode=ExecutionMode.VALIDATING, assertions=[]
     )
     executor = RequestHttp(spec)
-    result = executor.execute(reporter)
+    result = executor.run(resultset)
     assert result is False
 
 
-def test_validate_makes_get_and_matches_body(validator_3, reporter):
+def test_validate_makes_get_and_matches_body(validator_3, resultset):
     with vcr.use_cassette(
         "test_http_executor_validate_makes_get_and_matches_body"
     ) as cassette:
-        result = validator_3.execute(reporter)
+        result = validator_3.run(resultset)
 
         assert len(cassette) == 1
         r0 = cassette.requests[0]
@@ -114,11 +114,11 @@ def test_validate_makes_get_and_matches_body(validator_3, reporter):
         assert result
 
 
-def test_validate__matches_body_not_status(validator_4, reporter):
+def test_validate__matches_body_not_status(validator_4, resultset):
     with vcr.use_cassette(
         "test_http_executor_validate__matches_body_and_status"
     ) as cassette:
-        result = validator_4.execute(reporter)
+        result = validator_4.run(resultset)
 
         assert len(cassette) == 1
         r0 = cassette.requests[0]
@@ -137,7 +137,7 @@ def test_validate_body_and_status_do_not_match(assertion, validator_5, reporter_
     with vcr.use_cassette(
         "test_http_executor_validate_body_and_status_do_not_match"
     ) as cassette:
-        validator_5.execute(reporter_1)
+        validator_5.run(reporter_1)
 
         assert len(cassette) == 1
         r0 = cassette.requests[0]
