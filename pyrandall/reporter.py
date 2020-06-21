@@ -1,6 +1,6 @@
 import jsondiff
 
-from pyrandall.types import Assertion, AssertionCall
+from pyrandall.types import Assertion, AssertionCall, ResultSet
 
 SPACE = "  - "
 ONE_SPACE = "    - "
@@ -88,25 +88,3 @@ class Reporter(object):
 
     def json_diff_report(expected, actual):
         return jsondiff.diff(expected, actual, syntax="explicit")
-
-
-class ResultSet:
-    def __init__(self, reporter):
-        self.assertions = []
-        self.reporter = reporter
-
-    def all(self):
-        return len(self.assertions) != 0 and all(self.assertions)
-
-    def assertion_failed(self, assertion_call, fail_text):
-        self.reporter.print_assertion_failed(assertion_call, fail_text)
-        self.assertions.append(False)
-
-    def assertion_passed(self, assertion_call: AssertionCall):
-        self.reporter.print_assertion_passed(assertion_call)
-        self.assertions.append(True)
-
-    def assertion_skipped(self, assertion_call: AssertionCall):
-        self.reporter.print_assertion_skipped(assertion_call)
-        # True right?
-        self.assertions.append(True)

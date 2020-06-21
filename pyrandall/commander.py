@@ -43,6 +43,9 @@ class Commander:
                 for spec in scenario.simulate_tasks:
                     e = self.executor_factory(spec)
                     reporter.run_task(e.represent())
+                    # FIXME: no check against result
+                    # create a failing test to force commander
+                    # interacting witht the executor API
                     e.execute(resultset)
 
             if self.flags.has_validate():
@@ -51,6 +54,7 @@ class Commander:
                 for spec in scenario.validate_tasks:
                     e = self.executor_factory(spec)
                     reporter.run_task(e.represent())
+                    # FIXME: no check against result
                     e.execute(resultset)
 
     def executor_factory(self, spec):
