@@ -1,4 +1,5 @@
-from pyrandall.types import ResultSet
+from pyrandall.types import AssertionCall
+from pyrandall.exceptions import ZeroAssertions
 
 from abc import ABC, abstractmethod
 
@@ -9,16 +10,15 @@ class Executor(ABC):
         self.spec = spec
         self.execution_mode = spec.execution_mode
 
-    def run(self, resultset: ResultSet):
-        if len(self.spec.assertions) == 0:
+    def run(self):
+        if not self.spec.assertions:
             # TODO: Reporter should say "zero assertions found / specified"
-            return False
+            raise ZeroAssertions("zero assertions specified for executor")
 
-        assertions = self.execute(resultset)
-        return all([a.passed() for a in assertions])
+        return list(self.execute())
 
     @abstractmethod
-    def execute(self, resultset: ResultSet):
+    def execute(self) -> [AssertionCall]:
         ...
 
     @abstractmethod

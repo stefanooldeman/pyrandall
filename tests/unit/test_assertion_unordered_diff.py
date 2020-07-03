@@ -15,7 +15,7 @@ def test_python_like_json_equals(resultset):
     a = dict(foo="bar", x={"a": "b"})
     b = dict(foo="bar", x={"a": "b"})
 
-    obj = UnorderedCompare(a)
+    obj = UnorderedCompare("json_equals", a)
     assert obj.eval(b)
 
 
@@ -23,7 +23,7 @@ def test_json_equals(resultset):
     a = """{"foo": "bar", "x": {"a": "b"}}"""
     b = """{"foo": "bar", "x": {"a": "b"}}"""
 
-    obj = UnorderedCompare(a)
+    obj = UnorderedCompare("json_equals", a)
     assert obj.eval(b)
 
 
@@ -31,5 +31,5 @@ def test_two_fields_not_equals(resultset):
     a = dict(foo="bar", x={"a": "b"})
     b = dict(foo="bar", x={"a": "x"})
 
-    obj = UnorderedCompare(a)
-    assert obj.eval(b) is False
+    obj = UnorderedCompare("json_euqlas", a)
+    assert not obj.eval(b)

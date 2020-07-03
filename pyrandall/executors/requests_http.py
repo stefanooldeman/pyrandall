@@ -1,7 +1,9 @@
 import requests
 
 from pyrandall import const
-from pyrandall.types import Assertion, ResultSet
+from pyrandall.types import Assertion
+from pyrandall.exceptions import ZeroEvents
+from pyrandall.tools import flatten
 
 from .common import Executor
 
@@ -13,7 +15,7 @@ class RequestHttp(Executor):
         self.execution_mode = spec.execution_mode
         self.spec = self.add_custom_headers(spec)
 
-    def execute(self, resultset: ResultSet):
+    def execute(self):
         spec = self.spec
         # TODO: assert / tests the request happened without exceptions
         # act on __exit__ codes
@@ -26,12 +28,12 @@ class RequestHttp(Executor):
             response = requests.request(spec.method, spec.url, headers=spec.headers)
 
         with Assertion(
-            "status_code", spec.assertions, "http response status_code", resultset
+            "status_code", spec.assertions, "http response status_code"
         ) as a:
             a.actual_value = response.status_code
             yield a
 
-        with Assertion("body", spec.assertions, "http response body", resultset) as a:
+        with Assertion("body", spec.assertions, "http response body") as a:
             # a.result = event.json_deep_equals(a.expected, response.content)
             a.actual_value = response.content
             yield a
@@ -49,17 +51,17 @@ class RequestHttpEvents(Executor):
 
     def __init__(self, spec, *args, **kwargs):
         super().__init__(spec)
-        self.nr_of_requests = len(spec.requests)
+        self.requests = spec.requests
 
-    def run(self, resultset: ResultSet):
-        if self.nr_of_requests == 0:
-            # TODO: Reporter should say "zero events found / specified"
-            return False
+    def run(self):
+        if not self.requests:
+            raise ZeroEvents("zero events specified for executor")
 
-        return all([RequestHttp(r).run(resultset) for r in self.spec.requests])
+        return flatten(super().run())
 
-    def execute(self, _resultset):
-        pass
+    def execute(self):
+        for r in self.requests:
+            yield RequestHttp(r).run()
 
     def represent(self):
-        return f"RequestHttpEvents {self.spec.execution_mode.represent()} {self.nr_of_requests} events"
+        return f"RequestHttpEvents {self.spec.execution_mode.represent()} {len(self.requests)} events"

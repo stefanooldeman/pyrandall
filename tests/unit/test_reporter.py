@@ -58,10 +58,10 @@ def test_reporter_result_empty_fails(assertion):
 
 def test_get_failures():
     # given two assertions
-    a1 = AssertionCall(1)
+    a1 = AssertionCall("field_y", 1)
     a1.actual_value = 4
 
-    a2 = AssertionCall("foo")
+    a2 = AssertionCall("field_x", "foo")
     a2.actual_value = "foo"
 
     r = Reporter()
@@ -75,4 +75,4 @@ def test_get_failures():
     failures = r.failed_assertions()
     assert 1 == len(failures)
     f1 = failures[0]
-    assert "assertion failed, expected 1, but got 4" == str(f1)
+    assert "assertion failed on field_y, expected 1, but got 4" == str(f1)

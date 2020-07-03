@@ -32,9 +32,9 @@ def vcr_headers_filter():
 def vcr_match_on():
     return []
 
-def test_header_present(httpserver, executor_http, reporter, vcr):
+def test_header_present(httpserver, executor_http, vcr):
     with vcr.use_cassette("test_http_user_agent") as cassette:
-        result = executor_http.execute(reporter)
+        result = executor_http.execute()
 
         assert len(cassette) == 1
         r0 = cassette.requests[0]

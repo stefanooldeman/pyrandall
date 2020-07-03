@@ -4,14 +4,8 @@ from unittest.mock import MagicMock
 import pytest
 
 from pyrandall.executors import BrokerKafka
-from pyrandall.reporter import Reporter
 from pyrandall.spec import BrokerKafkaSpec
-from pyrandall.types import Assertion, ExecutionMode
-
-
-@pytest.fixture
-def reporter_1():
-    return MagicMock(assertion=MagicMock(spec_set=Assertion), unsafe=True)
+from pyrandall.types import Assertion, SkipAssertionCall, ExecutionMode
 
 
 def new_executor(assertions):
@@ -30,44 +24,76 @@ MESSAGE_JSON = b'{\n  "uri": "iphone://settings/updates",\n  "session": "111",\n
 # given consumer returns a list with 0 messages
 @mock.patch("pyrandall.executors.broker_kafka.KafkaConn.check_connection", return_value=True)
 @mock.patch("pyrandall.executors.broker_kafka.KafkaConn.consume", return_value=[])
-def test_validate_fail_zero_messages(_consume, _check, reporter_1):
-    # when the expected value is 1
+def test_validate_fail_zero_messages(_consume, _check):
+    # given the expected value is 1
     validator = new_executor({"total_events": 1})
-    # and it is called
-    validator.run(reporter_1)
-    # then report that a assertion failed
-    reporter_1.assertion_failed.assert_called_with(
-        mock.ANY, "total amount of received events"
-    )
+    # when called
+    assertion_calls = validator.run()
+
+    # then get two results
+    assert len(assertion_calls) == 2
+    # first one failed
+    a1 = assertion_calls[0]
+    assert a1.field == "total_events"
+    assert a1.called
+    assert not a1.passed()
+    # second one failed
+    a2 = assertion_calls[1]
+    assert a2.field == "unordered"
+    assert not a2.called
+    assert isinstance(a2, SkipAssertionCall)
+
 
 
 @mock.patch("pyrandall.executors.broker_kafka.KafkaConn.check_connection", return_value=True)
 @mock.patch("pyrandall.executors.broker_kafka.KafkaConn.consume")
-def test_validate_fail_one_messages_body(consume, _check, reporter_1):
+def test_validate_fail_one_messages_body(consume, _check):
     # given a value that is empty json
     consume.return_value = [{"value": b"{}"}]
     # and a assertion on a full example json
     validator = new_executor(
         {"total_events": 1, "unordered": [{"value": MESSAGE_JSON}]}
     )
-    validator.run(reporter_1)
-    reporter_1.assertion_passed.assert_called_with(mock.ANY)
-    # then validate fails
-    reporter_1.assertion_failed.assert_called_with(mock.ANY, "unordered events")
+    # when called
+    assertion_calls = validator.run()
+
+    # then get two results
+    assert len(assertion_calls) == 2
+    assert len(assertion_calls) == 2
+    # expect totals to pass
+    a1 = assertion_calls[0]
+    assert a1.field == "total_events"
+    assert a1.called
+    assert a1.passed()
+    # expect diff to fail
+    a2 = assertion_calls[1]
+    assert a2.field == "unordered"
+    assert a2.called
+    assert not a2.passed()
 
 
 @mock.patch("pyrandall.executors.broker_kafka.KafkaConn.check_connection", return_value=True)
 @mock.patch("pyrandall.executors.broker_kafka.KafkaConn.consume")
-def test_validate_matches_all(consume, _check, reporter_1):
+def test_validate_matches_all(consume, _check):
     # given a message with bytes json
     consume.return_value = [MESSAGE_JSON]
-    # and validators that asserts 1 message and 1 message value
+    # and validators
     validator = new_executor(
         {"total_events": 1, "unordered": [MESSAGE_JSON]}
     )
-    validator.run(reporter_1)
-    reporter_1.assertion_failed.assert_not_called()
-    # then validate passes on the message count and body compare
-    assert (
-        2 == reporter_1.assertion_passed.call_count
-    ), 'expected method "assertion_passed(ANY)" to be called twice'
+    # when called
+    assertion_calls = validator.run()
+
+    # then get two results
+    assert len(assertion_calls) == 2
+    assert len(assertion_calls) == 2
+    # expect to pass
+    a1 = assertion_calls[0]
+    assert a1.field == "total_events"
+    assert a1.called
+    assert a1.passed()
+    # and no diff, thus pass
+    a2 = assertion_calls[1]
+    assert a2.field == "unordered"
+    assert a2.called
+    assert a2.passed()

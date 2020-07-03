@@ -1,12 +1,13 @@
 from . import executors
 from .reporter import Reporter
-from .spec import Adapter
+from .executors.common import Executor
+from .spec import Feature, Adapter
 from .types import Flags
 
 
 class Commander:
-    def __init__(self, spec, flags: Flags):
-        self.spec = spec
+    def __init__(self, feature: Feature, flags: Flags):
+        self.feature = feature
         self.flags = flags
 
     def invoke(self):
@@ -21,8 +22,8 @@ class Commander:
         # - only simulate
         # - only validate
         # - consecutively simulate and validate
-        reporter.feature(self.spec.description)
-        self.run_scenarios(self.spec.scenario_items, reporter)
+        reporter.feature(self.feature.description)
+        self.run_scenarios(self.feature.scenario_items, reporter)
         reporter.print_failures()
         return reporter.passed()
 
@@ -43,10 +44,7 @@ class Commander:
                 for spec in scenario.simulate_tasks:
                     e = self.executor_factory(spec)
                     reporter.run_task(e.represent())
-                    # FIXME: no check against result
-                    # create a failing test to force commander
-                    # interacting witht the executor API
-                    e.execute(resultset)
+                    self.run_executor(e, resultset)
 
             if self.flags.has_validate():
                 reporter.validate()
@@ -54,8 +52,12 @@ class Commander:
                 for spec in scenario.validate_tasks:
                     e = self.executor_factory(spec)
                     reporter.run_task(e.represent())
-                    # FIXME: no check against result
-                    e.execute(resultset)
+                    self.run_executor(e, resultset)
+
+    def run_executor(self, executor: Executor, resultset):
+        # interacting with the Executor API
+        for assertion_call in executor.run():
+            assertion_call.report(resultset)
 
     def executor_factory(self, spec):
         # each spec can be run with an executor

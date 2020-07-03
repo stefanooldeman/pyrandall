@@ -2,6 +2,9 @@ import os
 from unittest.mock import MagicMock
 
 import pyrandall.cli
+from pyrandall.spec import Feature
+from pyrandall.reporter import Reporter
+from pyrandall.types import ResultSet
 
 from vcr import VCR
 import pytest
@@ -36,8 +39,19 @@ def vcr(request):
 # Internal Class Mocks, Stubs etc.
 
 @pytest.fixture
+def feature():
+    return MagicMock(spec_set=Feature)
+
+@pytest.fixture
 def reporter():
-    return MagicMock(unsafe=True)
+    return MagicMock(spec_set=Reporter)
+
+@pytest.fixture
+def resultset():
+    # Also see Reporter().create_and_track_resultset()
+    # if this creates issues, move to MagicMock
+    # for now it works to use this tiny object
+    return MagicMock(spec_set=ResultSet, unsafe=True)
 
 
 # Helper functions
@@ -63,5 +77,3 @@ class PyrandallCli():
     def invoke(self, command):
         runner = CliRunner()
         return runner.invoke(pyrandall.cli.main, command, catch_exceptions=False)
-
-

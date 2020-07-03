@@ -1,5 +1,6 @@
+from abc import ABCMeta, abstractmethod
 from enum import Enum, Flag, auto
-from typing import Any, Dict, List, NamedTuple
+from typing import Any, Dict, List, NamedTuple, NamedTupleMeta
 
 import jsondiff
 from deepdiff import DeepDiff
@@ -47,15 +48,14 @@ class Flags(Flag):
 
 class Assertion:
 
-    def __init__(self, field: str, spec: Dict, on_fail_text, resultset):
+    def __init__(self, field: str, spec: Dict, on_fail_text):
         self.field = field
         self.spec = spec
-        self.resultset = resultset
         self.on_fail_text = on_fail_text
         if self.field in self.spec:
             self.call = self.create_assertion(self.spec[self.field])
         else:
-            self.call = SkipAssertionCall()
+            self.call = SkipAssertionCall(self.field)
 
     def __enter__(self):
         return self.call
@@ -63,28 +63,23 @@ class Assertion:
     def __exit__(self, exc_type, exc_value, exc_traceback):
         # TODO: check that no errors where raised
         # (to check a http / socket connection was successfull without exceptions)
-        # resultset.raise_error()
-        if self.call.called and self.call.result:
-            self.resultset.assertion_passed(self.call)
-        elif self.call.called:
-            self.resultset.assertion_failed(self.call, self.on_fail_text)
-        else:
-            self.resultset.assertion_skipped(self.call)
+        pass
 
     def create_assertion(self, value):
-        return AssertionCall(expected_value=value)
+        return AssertionCall(field=self.field, expected_value=value)
 
 
 class UnorderedDiffAssertion(Assertion):
-    def __init__(self, field: str, spec: Dict, on_fail_text, resultset):
-        super().__init__(field, spec, on_fail_text, resultset)
+    def __init__(self, field: str, spec: Dict, on_fail_text):
+        super().__init__(field, spec, on_fail_text)
 
     def create_assertion(self, value):
-        return UnorderedCompare(expected_value=value)
+        return UnorderedCompare(self.field, expected_value=value)
 
 
 class AssertionCall:
-    def __init__(self, expected_value):
+    def __init__(self, field, expected_value):
+        self.field = field
         self.expected = expected_value
         self.actual = None
         self.called = False
@@ -107,16 +102,25 @@ class AssertionCall:
     def passed(self):
         return self.called and self.result
 
+    def report(self, resultset):
+        # think twice about if this method should be here
+        if self.passed():
+            resultset.assertion_passed(self)
+        elif self.called:
+            resultset.assertion_failed(self, str(self))
+        else:
+            resultset.assertion_skipped(self)
+
     def __str__(self):
         if self.passed():
-            return f"assertion passed, expected {self.expected}, and got {self.actual}"
+            return f"assertion passed on {self.field}, expected {self.expected}, and got {self.actual}"
         else:
-            return f"assertion failed, expected {self.expected}, but got {self.actual}"
+            return f"assertion failed on {self.field}, expected {self.expected}, but got {self.actual}"
 
 
 class UnorderedCompare(AssertionCall):
-    def __init__(self, expected_value):
-        super().__init__(expected_value)
+    def __init__(self, field, expected_value):
+        super().__init__(field, expected_value)
         self.diff = None
 
     def eval(self, actual_value):
@@ -136,7 +140,7 @@ class UnorderedCompare(AssertionCall):
             return super().__str__()
         else:
             return (
-                f"assertion failed (unordered json comparison"
+                f"assertion failed {self.field}, "
                 f"got: {self.expected}"
                 f"diff: {self.diff}"
                 f"See https://github.com/seperman/deepdiff for more info on how to read the diff"
@@ -149,8 +153,8 @@ def json_deep_equals(expected, actual):
 
 
 class SkipAssertionCall(AssertionCall):
-    def __init__(self):
-        super().__init__(None)
+    def __init__(self, field):
+        super().__init__(field, None)
 
     def eval(self, actual_value):
         pass
@@ -188,9 +192,14 @@ class ResultSet:
 # - field execution_mode is present
 # - field adapter is constant
 # - field assertions is present
+class NamedTupleABCMeta(ABCMeta, NamedTupleMeta):
+    pass
+
+class Spec(metaclass=NamedTupleABCMeta):
+    pass
 
 
-class RequestHttpSpec(NamedTuple):
+class RequestHttpSpec(NamedTuple, Spec):
     execution_mode: ExecutionMode
     # general request options
     method: str
@@ -206,14 +215,16 @@ class RequestHttpSpec(NamedTuple):
     adapter: Adapter = Adapter.REQUESTS_HTTP
 
 
-class RequestEventsSpec(NamedTuple):
+class RequestEventsSpec(NamedTuple, Spec):
     # general request options
     requests: List[RequestHttpSpec]
     execution_mode = ExecutionMode.SIMULATING
     adapter: Adapter = Adapter.REQUESTS_HTTP
+    # skip assertions
+    assertions = True
 
 
-class BrokerKafkaSpec(NamedTuple):
+class BrokerKafkaSpec(NamedTuple, Spec):
     execution_mode: ExecutionMode
     # general broker options
     topic: str
@@ -232,6 +243,7 @@ __all__ = [
     "Assertion",
     "AssertionCall",
     "SkipAssertionCall",
+    "Spec",
     "RequestHttpSpec",
     "RequestEventsSpec",
     "BrokerKafkaSpec",
