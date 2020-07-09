@@ -1,6 +1,7 @@
+from sys import stdout
 import jsondiff
 
-from pyrandall.types import Assertion, AssertionCall, ResultSet
+from pyrandall.types import Assertion, AssertionCall, ResultSet, RunInfo
 
 SPACE = "  - "
 ONE_SPACE = "    - "
@@ -8,11 +9,18 @@ TWO_SPACE = "      - "
 
 
 class Reporter(object):
-    def __init__(self):
+    def __init__(self, printer=None):
         # instances off ResultSet
         self.results = []
         # failures are kept for printing at the end of a run
         self.failures = []
+        if not printer:
+            self.printer = stdout.write
+        else:
+            self.printer = printer
+
+    def print(self, *args, **kwargs):
+        self.printer(*args, **kwargs)
 
     def feature(self, text):
         """
@@ -20,7 +28,7 @@ class Reporter(object):
 
             uses Scenario interface to get the title / description data
         """
-        print(f"Feature: {text}")
+        self.print(f"Feature: {text}")
 
     def scenario(self, text: str):
         """
@@ -28,7 +36,10 @@ class Reporter(object):
 
             uses Scenario interface to get the title / description data
         """
-        print(f"{SPACE}Scenario {text}")
+        self.print(f"{SPACE}Scenario {text}")
+
+    def finished(self, rinfo: RunInfo):
+        self.print(f"completed running {rinfo.total_scenarios} scenarios")
 
     # TODO: move this to commander
     def create_and_track_resultset(self):
@@ -42,7 +53,7 @@ class Reporter(object):
 
             uses Scenario interface to get the title / description data
         """
-        print(f"{ONE_SPACE}Simulate")
+        self.print(f"{ONE_SPACE}Simulate")
 
     def validate(self):
         """
@@ -50,14 +61,14 @@ class Reporter(object):
 
             uses Scenario interface to get the title / description data
         """
-        print(f"{ONE_SPACE}Validate")
+        self.print(f"{ONE_SPACE}Validate")
 
     def run_task(self, text):
-        print(f"{ONE_SPACE}{text}")
+        self.print(f"{ONE_SPACE}{text}")
 
     def print_assertion_failed(self, assertion_call, fail_text):
         # TODO: add assertion type (equal, greater than)
-        print(
+        self.print(
             f"{TWO_SPACE}assertion failed: {fail_text} did not equal, "
             f"{assertion_call}"
         )
@@ -65,10 +76,10 @@ class Reporter(object):
         self.failures.append(assertion_call)
 
     def print_assertion_passed(self, assertion_call: AssertionCall):
-        print(f"{TWO_SPACE}{assertion_call}")
+        self.print(f"{TWO_SPACE}{assertion_call}")
 
     def print_assertion_skipped(self, assertion_call: AssertionCall):
-        print(f"{TWO_SPACE}{assertion_call}")
+        self.print(f"{TWO_SPACE}{assertion_call}")
         pass
 
     def assertion(self, field, spec):
@@ -76,9 +87,9 @@ class Reporter(object):
 
     def print_failures(self):
         if self.failures:
-            print("\nFailures:")
+            self.print("\nFailures:")
             for failed_assertion in self.failures:
-                print(f"{ONE_SPACE}{failed_assertion}")
+                self.print(f"{ONE_SPACE}{failed_assertion}")
 
     def passed(self):
         return len(self.results) != 0 and all([rs.all() for rs in self.results])

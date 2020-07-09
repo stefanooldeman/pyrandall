@@ -1,8 +1,24 @@
+from typing import NamedTuple
+
 from . import executors
 from .reporter import Reporter
 from .executors.common import Executor
 from .spec import Feature, Adapter
-from .types import Flags
+from .types import Flags, RunInfo
+
+class Commander2:
+
+    def __init__(self, feature: Feature, flags, reporter):
+        self.feature = feature
+        self.reporter = reporter
+
+    def invoke(self):
+        self.reporter.feature(self.feature.description)
+
+        run_info = RunInfo(total_scenarios=len(self.feature.scenario_items))
+        self.reporter.finished(run_info)
+        return run_info
+
 
 
 class Commander:

@@ -166,6 +166,10 @@ class SkipAssertionCall(AssertionCall):
         return f"assertion skipped"
 
 
+class RunInfo(NamedTuple):
+    total_scenarios: int
+
+
 class ResultSet:
     def __init__(self, reporter):
         self.assertions = []

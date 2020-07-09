@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from pyrandall.reporter import Reporter
-from pyrandall.types import AssertionCall
+from pyrandall.types import AssertionCall, RunInfo
 
 
 @pytest.fixture
@@ -76,3 +76,20 @@ def test_get_failures():
     assert 1 == len(failures)
     f1 = failures[0]
     assert "assertion failed on field_y, expected 1, but got 4" == str(f1)
+
+
+def test_finished_prints_empty_stats():
+    stdout = MagicMock()
+    r = Reporter(printer=stdout)
+
+    info = MagicMock(set_spec=RunInfo, total_scenarios=0)
+    r.finished(info)
+    stdout.assert_called_with("completed running 0 scenarios")
+
+def test_finished_prints_stats():
+    stdout = MagicMock()
+    r = Reporter(printer=stdout)
+
+    info = MagicMock(set_spec=RunInfo, total_scenarios=2)
+    r.finished(info)
+    stdout.assert_called_with("completed running 2 scenarios")
