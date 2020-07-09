@@ -1,6 +1,7 @@
 import pytest
 
 from pyrandall.spec import SpecBuilder
+from pyrandall.types import ExecutionMode
 from pyrandall.types import BrokerKafkaSpec, RequestEventsSpec, RequestHttpSpec
 
 
@@ -46,8 +47,10 @@ def test_creates_executors_for_simulate_only(feature):
 
     assert len(simulators) == 2
     i1 = simulators.pop()
+    assert i1.execution_mode == ExecutionMode.SIMULATING
     assert isinstance(i1, BrokerKafkaSpec)
     i0 = simulators.pop()
+    assert i0.execution_mode == ExecutionMode.SIMULATING
     assert isinstance(i0, RequestEventsSpec)
 
 
@@ -59,10 +62,13 @@ def test_creates_executors_for_validators_only(feature):
 
     assert len(validators) == 3
     i3 = validators.pop()
+    assert i3.execution_mode == ExecutionMode.VALIDATING
     assert isinstance(i3, BrokerKafkaSpec)
     i2 = validators.pop()
+    assert i2.execution_mode == ExecutionMode.VALIDATING
     assert isinstance(i2, BrokerKafkaSpec)
     i1 = validators.pop()
+    assert i1.execution_mode == ExecutionMode.VALIDATING
     assert isinstance(i1, RequestHttpSpec)
 
 
