@@ -1,6 +1,8 @@
 import os
 import re
 
+from typing import List
+
 import jsonschema
 import yaml
 
@@ -13,6 +15,7 @@ from pyrandall.types import (
     ExecutionMode,
     RequestEventsSpec,
     RequestHttpSpec,
+    Spec,
 )
 
 from .network import join_urlpath
@@ -105,7 +108,7 @@ class ScenarioGroup(object):
         self.simulate_tasks = self.build_simulate_tasks(data)
         self.validate_tasks = self.build_validate_tasks(data)
 
-    def build_simulate_tasks(self, data):
+    def build_simulate_tasks(self, data) -> List[Spec]:
         out = []
         item = data["simulate"]
         if item["adapter"] == "requests/http":
@@ -171,7 +174,7 @@ class ScenarioGroup(object):
     # functions related to validate specs
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def build_validate_tasks(self, data):
+    def build_validate_tasks(self, data) -> List[Spec]:
         out = []
         item = data["validate"]
         if item["adapter"] == "requests/http":

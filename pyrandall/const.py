@@ -17,6 +17,9 @@ VERSION_PATH = path.join("files", "VERSION")
 
 PYRANDALL_USER_AGENT = "pyrandall"
 
+ADAPTER_HTTP = "requests/http"
+ADAPTER_KAFKA = "broker/http"
+
 def get_version():
     version_path = path.join(DIR_PYRANDALL_HOME, VERSION_PATH)
     # if this fails you have not installed the package (see setup.py)

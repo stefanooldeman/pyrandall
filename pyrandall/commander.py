@@ -15,10 +15,12 @@ class Commander2:
     def invoke(self):
         self.reporter.feature(self.feature.description)
 
+        for scenario in self.feature.scenario_items:
+            self.reporter.scenario(scenario.description)
+
         run_info = RunInfo(total_scenarios=len(self.feature.scenario_items))
         self.reporter.finished(run_info)
         return run_info
-
 
 
 class Commander:
