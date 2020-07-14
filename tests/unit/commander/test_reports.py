@@ -39,7 +39,7 @@ def test_describe_startup_2(reporter, flags):
 #  running all scenarios
 
 def test_finished_without_scenarios(reporter, flags):
-    feature = MagicMock(scenario_items=[])
+    feature = MagicMock(scenario_groups=[])
     cmd = Commander2(feature, flags, reporter)
     info = cmd.invoke()
 
@@ -47,7 +47,7 @@ def test_finished_without_scenarios(reporter, flags):
     assert info.total_scenarios == 0
 
 def test_finished_with_two_scenarios(reporter, flags, scenario_groups):
-    feature = MagicMock(scenario_items=scenario_groups)
+    feature = MagicMock(scenario_groups=scenario_groups)
     cmd = Commander2(feature, flags, reporter)
     info = cmd.invoke()
 
@@ -58,7 +58,7 @@ def test_finished_with_two_scenarios(reporter, flags, scenario_groups):
 # when run
 
 def test_describe_zero_scenarios(reporter, flags):
-    feature = MagicMock(scenario_items=[])
+    feature = MagicMock(scenario_groups=[])
     cmd = Commander2(feature, flags, reporter)
     info = cmd.invoke()
 
@@ -67,7 +67,7 @@ def test_describe_zero_scenarios(reporter, flags):
 def test_describe_two_scenario_en(reporter, flags, scenario_groups):
     # given two scenarios
     # and commander
-    feature = MagicMock(scenario_items=scenario_groups)
+    feature = MagicMock(scenario_groups=scenario_groups)
     cmd = Commander2(feature, flags, reporter)
     info = cmd.invoke()
 
@@ -81,7 +81,7 @@ def test_describe_two_scenario_it(reporter, flags):
     s = [MagicMock(description="send ciao", set_spec=ScenarioGroup),
          MagicMock(description="reply pronto", set_spec=ScenarioGroup)]
     # and commander
-    feature = MagicMock(scenario_items=s)
+    feature = MagicMock(scenario_groups=s)
     cmd = Commander2(feature, flags, reporter)
     info = cmd.invoke()
 

@@ -1,3 +1,4 @@
+import time
 from typing import NamedTuple
 from unittest import mock
 from unittest.mock import MagicMock
@@ -52,6 +53,7 @@ def test_assertion_passed_and_tracked(resultset, feature):
     executor = TalkExecutor(spec, reply="hello")
     # when called
     cmd.run_executor(executor, resultset)
+
     resultset.assertion_failed.assert_not_called()
     assert (
         1 == resultset.assertion_passed.call_count
@@ -59,6 +61,21 @@ def test_assertion_passed_and_tracked(resultset, feature):
 
 
 def test_assertion_failed_and_tracked(resultset, feature):
+    # given synchronous commander
+    cmd = Commander(feature, Flags.E2E)
+    # and a spec that expects hello back
+    spec = MoodSpec(greeting="hi", assertions={"reply": "hello"})
+    # and configure no reply
+    executor = TalkExecutor(spec, reply=None)
+    # when called
+    cmd.run_executor(executor, resultset)
+
+    resultset.assertion_passed.assert_not_called()
+    assert (
+        1 == resultset.assertion_failed.call_count
+    ), 'expected method "assertion_passed(ANY)" to be called twice'
+
+def test_async_assertion_failed_and_tracked(resultset, feature):
     # given synchronous commander
     cmd = Commander(feature, Flags.E2E)
     # and a spec that expects hello back

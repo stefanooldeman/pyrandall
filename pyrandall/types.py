@@ -18,6 +18,7 @@ class Adapter(Enum):
     REQUEST_HTTP_EVENTS = "request/http/events"
     REQUESTS_HTTP = "request/http"
     BROKER_KAFKA = "broker/kafka"
+    NOOP = "noop"
 
     def __str__(self):
         return f"adapter: {self.value}"
@@ -80,42 +81,36 @@ class UnorderedDiffAssertion(Assertion):
 class AssertionCall:
     def __init__(self, field, expected_value):
         self.field = field
-        self.expected = expected_value
-        self.actual = None
-        self.called = False
-        self.result = None
+        self._expected = expected_value
+        self._actual = None
+        self._called = False
+        self._result = None
+
+    @property
+    def called(self):
+        return self._called
 
     @property
     def actual_value(self):
-        return self.actual
+        return self._actual
 
     @actual_value.setter
     def actual_value(self, value):
-        self.actual = value
-        self.eval(value)
+        self._actual = value
+        self._result = self.eval(value)
 
     def eval(self, actual_value):
-        self.called = True
-        self.result = self.expected == actual_value
-        return self.result
+        self._called = True
+        return self._expected == actual_value
 
     def passed(self):
-        return self.called and self.result
-
-    def report(self, resultset):
-        # think twice about if this method should be here
-        if self.passed():
-            resultset.assertion_passed(self)
-        elif self.called:
-            resultset.assertion_failed(self, str(self))
-        else:
-            resultset.assertion_skipped(self)
+        return self._called and self._result
 
     def __str__(self):
         if self.passed():
-            return f"assertion passed on {self.field}, expected {self.expected}, and got {self.actual}"
+            return f"assertion passed on {self.field}, expected {self._expected}, and got {self._actual}"
         else:
-            return f"assertion failed on {self.field}, expected {self.expected}, but got {self.actual}"
+            return f"assertion failed on {self.field}, expected {self._expected}, but got {self._actual}"
 
 
 class UnorderedCompare(AssertionCall):
@@ -124,16 +119,15 @@ class UnorderedCompare(AssertionCall):
         self.diff = None
 
     def eval(self, actual_value):
-        self.called = True
+        self._called = True
         self.diff = DeepDiff(
-            self.expected,
+            self._expected,
             actual_value,
             ignore_order=True,
             report_repetition=True,
             verbose_level=2,
         )
-        self.result = self.diff == {}
-        return self.result
+        return self.diff == {}
 
     def __str__(self):
         if self.passed():
@@ -141,7 +135,7 @@ class UnorderedCompare(AssertionCall):
         else:
             return (
                 f"assertion failed {self.field}, "
-                f"got: {self.expected}"
+                f"got: {self._expected}"
                 f"diff: {self.diff}"
                 f"See https://github.com/seperman/deepdiff for more info on how to read the diff"
             )
@@ -202,6 +196,11 @@ class NamedTupleABCMeta(ABCMeta, NamedTupleMeta):
 class Spec(metaclass=NamedTupleABCMeta):
     pass
 
+class NoOpSpec(NamedTuple, Spec):
+    execution_mode: ExecutionMode
+    adapter: Adapter = Adapter.NOOP
+    # skip assertions
+    assertions = True
 
 class RequestHttpSpec(NamedTuple, Spec):
     execution_mode: ExecutionMode
