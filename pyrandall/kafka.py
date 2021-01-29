@@ -10,19 +10,13 @@ from confluent_kafka.cimpl import Consumer, KafkaError, KafkaException, Producer
 from confluent_kafka import TopicPartition
 
 from .logger import log
+from .exceptions import KafkaSetupError, KafkaTopicError
 
 
 class ConsumerState(Enum):
     PARTITIONS_UNASSIGNED = 0
     PARTITIONS_ASSIGNED = 1
     TIMEOUT_SET = 2
-
-
-class KafkaSetupError(Exception):
-    pass
-
-class KafkaTopicError(Exception):
-    pass
 
 
 class KafkaConn:

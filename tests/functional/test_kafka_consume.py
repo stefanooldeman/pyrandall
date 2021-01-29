@@ -19,9 +19,11 @@ def ensure_topics_do_not_exist(topics: [str]):
         except KafkaException as e:
             # unwrap to KafkaError
             error = e.args[0]
-            if error.code == KafkaError.UNKNOWN_TOPIC_OR_PART:
+            if error.code() == KafkaError.UNKNOWN_TOPIC_OR_PART:
                 # topic not present, safely ignore
                 pass
+            else:
+                raise e
         assert future.done()
 
 
@@ -31,4 +33,5 @@ def test_validate_topic_not_found(kafka_cluster_info):
     with pytest.raises(KafkaTopicError) as e:
         kafka = KafkaConn()
         kafka.consume("fdsjkfldsfjdksl", topic_timeout=2.0)
-        assert "Topic {topic} does not exist" in e.message
+
+    assert "Topic fdsjkfldsfjdksl does not exist" in e.value.message

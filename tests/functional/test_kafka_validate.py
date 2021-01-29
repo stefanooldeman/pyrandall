@@ -53,15 +53,3 @@ def test_validate_unordered_passed(kafka_cluster_info, pyrandall_cli):
     result = pyrandall_cli.invoke(ARGV_SMALL)
     assert 'Usage: main' not in result.output
     assert result.exit_code == 0
-
-
-@freeze_time("2012-01-14 14:33:12")
-def test_validate_topic_not_found(kafka_cluster_info, pyrandall_cli):
-    ARGV_SMALL = [
-        "--config",
-        "examples/config/v1.json",
-        "-V",
-        "examples/scenarios/topic_not_found.yaml"
-    ]
-    with pytest.raises(KafkaTopicNotFoundError) as e:
-        result = pyrandall_cli.invoke(ARGV_SMALL)
