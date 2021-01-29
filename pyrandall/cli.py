@@ -59,11 +59,6 @@ def main(config_file, command_flag, filter_flag, specfiles):
 
 
 def run_command(config, flags, specfile):
-    # TODO: add logging options
-    # with open("logging.yaml") as log_conf_file:
-    #     log_conf = yaml.safe_load(log_conf_file)
-    #     dictConfig(log_conf)
-
     config["default_request_url"] = config["requests"].pop("url")
     config['dataflow_path'] = build_basedir(specfile)
     config['specfile'] = click.open_file(specfile, 'r')

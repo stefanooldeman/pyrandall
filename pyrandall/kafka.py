@@ -1,6 +1,5 @@
 import configparser
 import io
-import logging
 import os
 import sys
 import time
@@ -8,8 +7,9 @@ from enum import Enum
 from typing import Dict
 
 from confluent_kafka.cimpl import Consumer, KafkaError, KafkaException, Producer
+from confluent_kafka import TopicPartition
 
-log = logging.getLogger("kafka")
+from .logger import log
 
 
 class ConsumerState(Enum):
@@ -19,6 +19,9 @@ class ConsumerState(Enum):
 
 
 class KafkaSetupError(Exception):
+    pass
+
+class KafkaTopicError(Exception):
     pass
 
 
@@ -110,11 +113,15 @@ class KafkaConn:
         # subscribe to 1 or more topics and define the callback function
         # callback is only received after consumer.consume() is called!
         consumer.subscribe([topic], on_assign=self.callback_on_assignment)
-        log.info(f"Waiting for partition assignment ... (timeout at {timeout_consumer} seconds")
+        log.info(f"Waiting for partition assignment ... (timeout at {timeout_consumer} seconds)")
+        watermark = None
         try:
             while (time.monotonic() - timeout_start_time) < timeout_consumer:
                 # start consumption
                 messages = consumer.consume(timeout=0.1)
+                if not watermark:
+                    watermark = self.force_watermark_answer(consumer, topic)
+
                 # check for partition assignment
                 if self.consume_lock == ConsumerState.PARTITIONS_UNASSIGNED:
                     # this should not happen but we are not 100% sure
@@ -148,6 +155,9 @@ class KafkaConn:
                         #     "value": msg.value()
                         # })
                         events.append(msg.value())
+                else:
+                    time_remaining = round(time.monotonic() - timeout_start_time, 2)
+                    log.info(f"no messages, retry time passed {time_remaining}, max time: {timeout_consumer}")
             # only executed when while condition becomes false
             else:
                 # at the end check if the partition assignment was achieved
@@ -156,8 +166,6 @@ class KafkaConn:
 
         except KafkaException as e:
             log.error(f"Kafka error: {e}")
-            pass
-
         finally:
             consumer.close()
 
@@ -165,6 +173,26 @@ class KafkaConn:
         log.debug(f"this cycle took: {(end_time - start_time)} seconds")
 
         return events
+
+    def force_watermark_answer(self, consumer, topic: str):
+        """
+        if the api can't find a partition leader for this topic/partition
+        it most likely does not exist on the broker
+        """
+        default_timeout = 1.5
+        try:
+            topic_partition = TopicPartition(topic, partition=0)
+            response = consumer.get_watermark_offsets(topic_partition, timeout=default_timeout)
+            # documentation says None also means a timeout
+            if response is None:
+                log.debug(f"consumer.get_watermark_offsets returned None for {topic}")
+                raise KafkaTopicError(f"failed to get topic offset +1 (watermark) within {default_timeout} seconds. Does the topic exist?")
+        except KafkaException as e:
+            # KafkaError type: https://docs.confluent.io/platform/current/clients/confluent-kafka-python/#confluent_kafka.KafkaError
+            error = e.args[0]
+            log.debug(f"KafkaException: {e}")
+            if error.code() == KafkaError.LEADER_NOT_AVAILABLE:
+                raise KafkaTopicError(f"Topic {topic} does not exist or leader unavailable for topic-partition 0")
 
 
 class ConfigFactory:

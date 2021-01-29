@@ -3,6 +3,9 @@ import shlex
 import subprocess
 import time
 
+from pyrandall.executors.common import Executor
+from pyrandall.types import ExecutionMode, AssertionCall
+
 from confluent_kafka import Consumer, Producer, TopicPartition
 from confluent_kafka.admin import AdminClient, NewTopic
 
@@ -111,3 +114,23 @@ class KafkaConsumer(Consumer):
         # if high_watermark > 1:
         #     current_offset = high_watermark - 1
         return high_watermark
+
+
+class TalkExecutor(Executor):
+
+    def __init__(self, spec, helper):
+        super().__init__(spec)
+        self.helper = helper
+
+    def execute(self):
+        if self.execution_mode is ExecutionMode.SIMULATING:
+            time.sleep(0.1)
+            self.helper.send()
+        elif self.execution_mode is ExecutionMode.VALIDATING:
+            time.sleep(0.1)
+            self.helper.reply()
+
+        return MagicMock(set_spec=AssertionCall)
+
+    def represent(self):
+        print("Running Talk executor (Test Mock)")

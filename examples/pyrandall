@@ -2,12 +2,9 @@
 
 set -euf -o pipefail
 
-SCRIPT=`realpath $0`
-SCRIPTPATH=`dirname $SCRIPT`
-
 KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS:-"localhost:9092"}
 
-docker run --rm -t --network host --volume "${SCRIPTPATH}:/cwd" \
+docker run --rm -t --network host --volume "./examples:/cwd" \
   -e KAFKA_BOOTSTRAP_SERVERS="$KAFKA_BOOTSTRAP_SERVERS" \
   pyrandall:latest \
   --config /cwd/config/test_env.json $@

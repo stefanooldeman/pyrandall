@@ -28,10 +28,17 @@ class Commander2:
         self.reporter.finished(run_info)
         return run_info
 
-    def run_scenario_group(self, scenario):
-        self.reporter.scenario(scenario.description)
-        for task in scenario.steps:
+    def run_scenario_group(self, scenario_group):
+        self.reporter.scenario(scenario_group.description)
+        # seq = SequencedExecutor(scenario_group)
+        # seq.run()
+        for task in scenario_group.validate_tasks:
+            while not task.started:
+                time.sleep(0.1)
+
+        for task in scenario_group.simulate_tasks:
             task.run()
+
 
     def wait_for_results(self):
         for f in self.futures:
@@ -41,6 +48,19 @@ class Commander2:
 
         # reporter.print_failures()
         # return reporter.passed()
+
+    # In commander 2 this should be retuned from the ScenarioGroup spec builder
+    def executor_factory(self, spec):
+        # each spec can be run with an executor
+        # based on the adapter defined on the spec
+        if spec.adapter == Adapter.REQUESTS_HTTP:
+            return executors.RequestHttp(spec)
+        elif spec.adapter == Adapter.REQUEST_HTTP_EVENTS:
+            return executors.RequestHttpEvents(spec)
+        elif spec.adapter == Adapter.BROKER_KAFKA:
+            return executors.BrokerKafka(spec)
+        else:
+            raise NotImplementedError("no such adapter implemented")
 
 
 class Commander:

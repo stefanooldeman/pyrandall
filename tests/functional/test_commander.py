@@ -5,25 +5,13 @@ import pytest
 from pyrandall.executors.common import Executor
 from pyrandall.commander import Commander, Flags
 from pyrandall.reporter import ResultSet
-from pyrandall.spec import SpecBuilder
 
 
-@pytest.fixture
-def spec():
-    builder = SpecBuilder(
-        specfile=open("examples/scenarios/one_event.yaml"),
-        dataflow_path="examples/",
-        default_request_url="http://localhost:5000",
-        schemas_url="http://localhost:8899/schemas/",
-    )
-    return builder.feature()
-
-
-def test_commander_run_one_for_one(spec, reporter, vcr):
+def test_commander_run_one_for_one(spec_builder, reporter, vcr):
     with vcr.use_cassette("test_commander_run_one_for_one") as cassette:
         reporter.create_and_track_resultset.return_value = MagicMock(ResultSet, unsafe=True)
 
-        c = Commander(spec, Flags.E2E)
+        c = Commander(spec_builder.feature(), Flags.E2E)
         c.run(reporter)
 
         reporter.feature.assert_called_once_with("One event"),

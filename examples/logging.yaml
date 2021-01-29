@@ -12,7 +12,7 @@ loggers:
   pyrandall:
     level: INFO
   kafka:
-    level: INFO
+    level: DEBUG
 root:
   level: INFO
   handlers: [console]

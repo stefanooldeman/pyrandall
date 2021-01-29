@@ -1,0 +1,22 @@
+---
+version: scenario/v2
+feature:
+  description: Test without creating topics
+  scenarios:
+    - description: check enriched pageviews
+      simulate:
+        adapter: broker/kafka
+        messages:
+          - topic: pageviews
+            events:
+              - pageview.json
+      validate:
+        adapter: broker/kafka
+        messages:
+          - topic: enriched_pageviews_foo
+            assert_that_received:
+              timeout_after: 1m
+              total_events:
+                equals_to: 1
+              unordered:
+                - { equals_to_event: pageview.json }

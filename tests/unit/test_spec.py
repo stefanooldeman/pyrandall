@@ -11,7 +11,6 @@ def feature():
         specfile=open("examples/scenarios/v2.yaml"),
         dataflow_path="examples/",
         default_request_url="http://localhost:5000",
-        schemas_url="http://localhost:8899/schemas/",
     )
     return builder.feature()
 
@@ -77,5 +76,4 @@ def test_parse_events_plugins():
         specfile=open("examples/scenarios/v2.yaml"),
         dataflow_path="examples/",
         default_request_url="http://localhost:5000",
-        schemas_url="http://localhost:8899/schemas/",
     )

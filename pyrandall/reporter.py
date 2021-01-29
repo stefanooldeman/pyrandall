@@ -20,7 +20,8 @@ class Reporter(object):
             self.printer = printer
 
     def print(self, *args, **kwargs):
-        self.printer(*args, **kwargs)
+        print(*args)
+        # self.printer(*args, **kwargs)
 
     def feature(self, text):
         """

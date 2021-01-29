@@ -88,7 +88,6 @@ class ScenarioGroup(object):
         events_dirname="events",
         results_dirname="results",
         default_request_url=None,
-        schemas_url=None,
         # some tests don't pass this argument, but should
         # TODO: remove default argument?
         hook=pyrandall.behaviors,
@@ -101,9 +100,6 @@ class ScenarioGroup(object):
         self.description = data["description"]
 
         self.default_request_url = default_request_url
-        if not schemas_url:
-            raise ValueError("missing argument schemas_url")
-        self.schema_server_url = schemas_url
         self.hook = hook
         self.simulate_tasks = self.build_simulate_tasks(data)
         self.validate_tasks = self.build_validate_tasks(data)
@@ -125,7 +121,6 @@ class ScenarioGroup(object):
 
     def build_simulate_request_events_spec(self, spec):
         # build according to scenario/v2 schema
-        assert "events" in spec
         # TODO: response.status_code is validated implicitly against 204
         # this should be added to the scenario/v2 as assertion to overwrite
         spec["assert_that_responded"] = {"status_code": {"equals_to": 204}}
@@ -239,7 +234,7 @@ class ScenarioGroup(object):
             # alias for more verbose syntax like:
             # is it enough?
             assertions.update(
-                self.flatten_assertions({"total_events": {"equals_to": 0}})
+                self.flatten_assertions(adapter, {"total_events": {"equals_to": 0}})
             )
         elif (
             "assert_that_received" in spec
@@ -307,7 +302,12 @@ class Feature:
     def __init__(self, factory, data, **kwargs):
         self.description = data["description"]
         self.factory = factory
+        # TODO: make this private
         self.scenario_items = self.build_scenarios(data["scenarios"])
+
+    @property
+    def scenario_groups(self):
+        return self.scenario_items
 
     def build_scenarios(self, scenarios_list):
         return [

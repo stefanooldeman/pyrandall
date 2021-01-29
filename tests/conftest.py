@@ -5,6 +5,7 @@ import pyrandall.cli
 from pyrandall.spec import Feature
 from pyrandall.reporter import Reporter
 from pyrandall.types import ResultSet
+from pyrandall.spec import SpecBuilder
 
 from vcr import VCR
 import pytest
@@ -46,6 +47,15 @@ def feature():
 def reporter():
     return MagicMock(spec_set=Reporter)
 
+
+@pytest.fixture
+def spec_builder():
+    return SpecBuilder(
+        specfile=open("examples/scenarios/v2.yaml"),
+        dataflow_path="examples/",
+        default_request_url="http://localhost:5000",
+    )
+
 @pytest.fixture
 def resultset():
     # Also see Reporter().create_and_track_resultset()
@@ -77,3 +87,15 @@ class PyrandallCli():
     def invoke(self, command):
         runner = CliRunner()
         return runner.invoke(pyrandall.cli.main, command, catch_exceptions=False)
+
+
+def dictmock(dictdata):
+    mock = MagicMock()
+    def getitem(key):
+        try:
+            return dictdata[key]
+        except KeyError as e:
+            # assuming no range args are given
+            return Mock(name=e.args[0])
+    mock.__getitem__.side_effect = getitem
+    return mock

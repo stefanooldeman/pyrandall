@@ -1,5 +1,4 @@
 {
-  "schemas_url": "http://host.docker.internal:5000/schemas/",
   "requests": {
     "url": "http://host.docker.internal:5000/",
     "headers": {}

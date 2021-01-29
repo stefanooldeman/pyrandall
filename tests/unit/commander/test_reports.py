@@ -63,6 +63,8 @@ def test_describe_zero_scenarios(reporter, flags):
     info = cmd.invoke()
 
     reporter.scenario.assert_not_called()
+    reporter.finished.assert_called_with(info)
+    assert info.total_scenarios == 0
 
 def test_describe_two_scenario_en(reporter, flags, scenario_groups):
     # given two scenarios
